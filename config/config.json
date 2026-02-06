@@ -9,6 +9,11 @@
     "colors": {
         "theme": "green"
     },
+    "discord": {
+        "enabled": false,
+        "token": "",
+        "channelId": ""
+    },
     "boneCollector": {
         "spawnerPos": {
             "x": 754,

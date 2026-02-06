@@ -8,6 +8,7 @@ import Logger from './utils/logger.js';
 import { AliasManager } from './utils/AliasManager.js';
 import { BoneCollector } from './modules/BoneCollector.js';
 import { GuiManager } from './modules/GuiManager.js';
+import { DiscordBridge } from './modules/DiscordBridge.js';
 import { ProfileManager } from './utils/ProfileManager.js';
 import { ScriptManager } from './utils/ScriptManager.js';
 import { loader as autoEat } from 'mineflayer-auto-eat';
@@ -21,6 +22,7 @@ export class BananaBot {
         this.guiManager = null;
         this.aliasManager = null;
         this.scriptManager = null;
+        this.discordBridge = null;
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
@@ -34,11 +36,51 @@ export class BananaBot {
     /**
      * Initialize the bot
      */
-    init() {
+    async init() {
         Logger.showBanner();
         this.connect();
         this.setupConsole();
+        await this.initDiscord();
         this.rl.prompt();
+    }
+
+    /**
+     * Initialize Discord bridge
+     */
+    async initDiscord() {
+        if (this.config.discord?.enabled) {
+            this.discordBridge = new DiscordBridge(
+                this.config,
+                (cmd) => this.handleDiscordCommand(cmd)
+            );
+
+            // Connect Logger to Discord
+            Logger.setLogCallback((msg) => {
+                if (this.discordBridge) {
+                    this.discordBridge.queueLog(msg);
+                }
+            });
+
+            await this.discordBridge.init();
+        }
+    }
+
+    /**
+     * Handle command from Discord
+     */
+    async handleDiscordCommand(input) {
+        // Special 'chat' command for sending messages
+        if (input.startsWith('chat ')) {
+            const message = input.slice(5);
+            if (this.bot && this.bot.entity) {
+                this.bot.chat(message);
+                Logger.log(`[DISCORD] ${message}`, 'CHAT');
+            }
+            return;
+        }
+
+        // Regular command
+        await this.handleCommand(input);
     }
 
     /**

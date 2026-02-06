@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "chalk": "^5.3.0",
+    "discord.js": "^14.14.1",
     "figlet": "^1.7.0",
     "mineflayer": "^4.20.1",
     "mineflayer-auto-eat": "^5.0.3",

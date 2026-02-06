@@ -15,6 +15,7 @@ const mutedColor = chalk.gray;
 class Logger {
   constructor() {
     this.rl = null;
+    this.onLog = null; // Callback for log forwarding (Discord)
   }
 
   /**
@@ -25,9 +26,23 @@ class Logger {
   }
 
   /**
+   * Set log callback for forwarding logs
+   */
+  setLogCallback(callback) {
+    this.onLog = callback;
+  }
+
+  /**
    * Print message without interrupting input
    */
   print(text) {
+    // Forward to callback if set
+    if (this.onLog) {
+      // Strip ANSI codes for callback
+      const clean = text.replace(/\x1b\[[0-9;]*m/g, '');
+      this.onLog(clean);
+    }
+
     if (this.rl) {
       readline.clearLine(process.stdout, 0);
       readline.cursorTo(process.stdout, 0);
