@@ -70,6 +70,15 @@ All commands start with `!` prefix.
 | `!eat` | Force eat |
 | `!autoeat on/off` | Toggle auto-eat |
 
+### TP Kill Commands
+
+| Command | Description |
+|---------|-------------|
+| `!tpkill main <player>` | Killer mode: auto-accept TPA from player & kill with best sword (1.9 PVP) |
+| `!tpkill send <player>` | Sender mode: send `/tpa <player>` every 5 seconds |
+| `!tpkill off` | Stop TP kill system |
+| `!tpkill status` | Show current TP kill status |
+
 ### Window/GUI Commands
 
 | Command | Description |

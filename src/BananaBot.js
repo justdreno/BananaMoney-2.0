@@ -9,6 +9,7 @@ import { AliasManager } from './utils/AliasManager.js';
 import { BoneCollector } from './modules/BoneCollector.js';
 import { GuiManager } from './modules/GuiManager.js';
 import { DiscordBridge } from './modules/DiscordBridge.js';
+import { TpKiller } from './modules/TpKiller.js';
 import { ProfileManager } from './utils/ProfileManager.js';
 import { ScriptManager } from './utils/ScriptManager.js';
 import { loader as autoEat } from 'mineflayer-auto-eat';
@@ -23,6 +24,7 @@ export class BananaBot {
         this.aliasManager = null;
         this.scriptManager = null;
         this.discordBridge = null;
+        this.tpKiller = null;
         this.rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
@@ -112,6 +114,7 @@ export class BananaBot {
         this.guiManager = new GuiManager(this.bot);
         this.profileManager = new ProfileManager();
         this.aliasManager = new AliasManager(this.config);
+        this.tpKiller = new TpKiller(this.bot, this.config);
         this.scriptManager = new ScriptManager(
             this.bot,
             this.config,
@@ -269,6 +272,12 @@ export class BananaBot {
                 Logger.info('!stats          - Show bot stats');
                 Logger.info('!drop <all/held> - Drop items');
                 Logger.info('!look <x> <y> <z> or <player> - Look at target');
+                Logger.info('');
+                Logger.system('=== TP Kill Commands ===');
+                Logger.info('!tpkill main <player>   - Killer: accept TPA & kill with best sword');
+                Logger.info('!tpkill send <player>   - Sender: send /tpa every 5 seconds');
+                Logger.info('!tpkill off             - Stop TP kill system');
+                Logger.info('!tpkill status          - Show current status');
                 Logger.info('');
                 Logger.system('=== Script Commands ===');
                 Logger.info('!script list              - List all scripts');
@@ -704,6 +713,39 @@ export class BananaBot {
                     }
                 } else {
                     Logger.error('Usage: !profile <list|save|load|delete> [name]');
+                }
+                break;
+
+            case 'tpkill':
+                if (!this.tpKiller) {
+                    Logger.error('TP Kill module not initialized.');
+                    break;
+                }
+                const tpAction = args[1];
+                const tpTarget = input.split(' ')[2]; // Use original case for player name
+
+                if (tpAction === 'main') {
+                    if (!tpTarget) {
+                        Logger.error('Usage: !tpkill main <playerName>');
+                        break;
+                    }
+                    this.tpKiller.startMain(tpTarget);
+                } else if (tpAction === 'send') {
+                    if (!tpTarget) {
+                        Logger.error('Usage: !tpkill send <mainBotName>');
+                        break;
+                    }
+                    this.tpKiller.startSend(tpTarget);
+                } else if (tpAction === 'off' || tpAction === 'stop') {
+                    this.tpKiller.stop();
+                } else if (tpAction === 'status') {
+                    Logger.system(this.tpKiller.getStatus());
+                } else {
+                    Logger.error('Usage: !tpkill <main|send|off|status> [playerName]');
+                    Logger.info('  !tpkill main <player> - Killer mode: accept TPA & kill');
+                    Logger.info('  !tpkill send <player> - Sender mode: send /tpa every 5s');
+                    Logger.info('  !tpkill off           - Stop TP kill system');
+                    Logger.info('  !tpkill status        - Show current status');
                 }
                 break;
 
