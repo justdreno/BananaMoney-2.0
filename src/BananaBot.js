@@ -10,6 +10,7 @@ import { BoneCollector } from './modules/BoneCollector.js';
 import { GuiManager } from './modules/GuiManager.js';
 import { DiscordBridge } from './modules/DiscordBridge.js';
 import { TpKiller } from './modules/TpKiller.js';
+import { MineAndSell } from './modules/MineAndSell.js';
 import { ProfileManager } from './utils/ProfileManager.js';
 import { ScriptManager } from './utils/ScriptManager.js';
 import { loader as autoEat } from 'mineflayer-auto-eat';
@@ -20,6 +21,7 @@ export class BananaBot {
         this.config = config;
         this.bot = null;
         this.boneCollector = null;
+        this.mineAndSell = null;
         this.guiManager = null;
         this.aliasManager = null;
         this.scriptManager = null;
@@ -115,6 +117,7 @@ export class BananaBot {
         this.profileManager = new ProfileManager();
         this.aliasManager = new AliasManager(this.config);
         this.tpKiller = new TpKiller(this.bot, this.config);
+        this.mineAndSell = new MineAndSell(this.bot, this.config);
         this.scriptManager = new ScriptManager(
             this.bot,
             this.config,
@@ -123,6 +126,7 @@ export class BananaBot {
 
         this.bot.once('spawn', () => {
             this.boneCollector.init();
+            this.mineAndSell.init();
             this.scriptManager.init();
         });
     }
@@ -272,6 +276,12 @@ export class BananaBot {
                 Logger.info('!stats          - Show bot stats');
                 Logger.info('!drop <all/held> - Drop items');
                 Logger.info('!look <x> <y> <z> or <player> - Look at target');
+                Logger.info('');
+                Logger.system('=== Mine & Sell Commands ===');
+                Logger.info('!mine <block>       - Start mining (e.g., !mine diamond_ore)');
+                Logger.info('!mine off           - Stop mining');
+                Logger.info('!mine status        - Show mining stats');
+                Logger.info('!mine radius <n>    - Set search radius (default: 64)');
                 Logger.info('');
                 Logger.system('=== TP Kill Commands ===');
                 Logger.info('!tpkill main <player>   - Killer: accept TPA & kill with best sword');
@@ -746,6 +756,35 @@ export class BananaBot {
                     Logger.info('  !tpkill send <player> - Sender mode: send /tpa every 5s');
                     Logger.info('  !tpkill off           - Stop TP kill system');
                     Logger.info('  !tpkill status        - Show current status');
+                }
+                break;
+
+            case 'mine':
+                if (!this.mineAndSell) {
+                    Logger.error('MineAndSell module not initialized.');
+                    break;
+                }
+                const mineAction = args[1];
+
+                if (!mineAction) {
+                    Logger.error('Usage: !mine <block> | !mine off | !mine status | !mine radius <n>');
+                } else if (mineAction === 'off' || mineAction === 'stop') {
+                    this.mineAndSell.stop();
+                } else if (mineAction === 'status') {
+                    this.mineAndSell.showStatus();
+                } else if (mineAction === 'radius') {
+                    const radius = parseInt(args[2]);
+                    if (!isNaN(radius) && radius > 0 && radius <= 256) {
+                        this.mineAndSell.searchRadius = radius;
+                        Logger.system(`Search radius set to ${radius} blocks`);
+                    } else {
+                        Logger.error('Usage: !mine radius <1-256>');
+                    }
+                } else {
+                    // Block name - could be multi-word
+                    const fullInput = input.split(' ');
+                    const blockName = fullInput.slice(1).join('_');
+                    this.mineAndSell.start(blockName);
                 }
                 break;
 
